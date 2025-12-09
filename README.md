@@ -44,7 +44,7 @@ The system operates as follows:
 To make this workflow run on your n8n instance, you need to configure the following:
 
 ### 1. Google Docs Template
-You must have a Google Doc to serve as the base template. The workflow looks for a File ID `1APuxiYPXnpdL3hBa_FMs_MAPUwibk65nJnVCequdRQE` (you must replace this with your own file ID).
+You must have a Google Doc to serve as the base template. The workflow looks for a File ID
 
 Inside your Google Doc, you must include the exact text placeholders below so the **Update a document** node can find them:
 *   `[Primer tiempo1]`
@@ -70,7 +70,7 @@ After importing the JSON, check these specific nodes:
 
 The workflow includes basic error branches:
 *   **Recognition Failed:** If the AI cannot structure the menu, it sends a message: *"No se logro reconocer el menú..."* (The menu could not be recognized...).
-*   **Token Expired:** If the Google Drive copy operation fails, it sends an alert to a specific support number (`+52 1 55...`) stating: *"El token de Google drive expiro..."* (The Google Drive token expired...).
+*   **Token Expired:** If the Google Drive copy operation fails, it sends an alert to a specific support number stating: *"El token de Google drive expiro..."* (The Google Drive token expired...).
 
 ## 🚀 How to Use
 

@@ -1,0 +1,666 @@
+{
+  "name": "AgenteMenu",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        320
+      ],
+      "id": "110f83cf-26f1-4ae1-93f0-aa1eff8a48ee",
+      "name": "WhatsApp Trigger",
+      "webhookId": "8b49405e-73ab-4dd3-9217-737b7d2ddc05",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "JwiRiQfc1CNbvI6f",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.candidates[0].content.parts[0].text }}{{ $('WhatsApp Trigger').item.json.messages[0].text.body }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "Dado el input, ya sea una descripción de imagen o directamente texto, tu trabajo es el formatear el texto por primer tiempo, segundo tiempo y tercer tiempo. Igualmente reducirás el texto de los platillos acortando palabras como \"salsa\" con \"s.\" y \"con\" con \"c/\". Haz uso correcto de las mayúsculas y minúsculas por cada platillo. Normalmente son 2 primeros tiempos. 2 segundos tiempos y 3 a 4 terceros tiempos. \"Agua y Postre\" no se incluye\n\nEl ouput sera solamente un json (nada mas) con los platillos. A continuacion un ejemplo de como debe quedar el json:\n{\n\t\"Primer Tiempo\": [\"Consome\", \"Sopa\"],\n\t\"Segundo Tiempo\": [\"Arroz\", \"Ensalada\"],\n  \"Tercer Tiempo\": [\"Pollo\", \"Bistec\", \"Calabaza rellena\"]\n}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        592,
+        320
+      ],
+      "id": "7678e707-71e3-4557-9c59-6df29dcbefff",
+      "name": "AI Agent",
+      "retryOnFail": true,
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "operation": "mediaUrlGet",
+        "mediaGetId": "={{ $('WhatsApp Trigger').item.json.messages[0].image.id }}"
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b9c715b6-3e4d-4ff4-9dda-6bb62967d537",
+      "name": "Download media1",
+      "webhookId": "ec852cfa-fbcd-4064-9969-7cfeafd16c08",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "text": "Obtén cuales platillos contiene la imagen",
+        "inputType": "binary",
+        "simplify": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        368,
+        0
+      ],
+      "id": "9af433bc-6a95-4dcc-8f68-0f08db972f6e",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XJ46LCvWfQnGCzlA",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        192,
+        0
+      ],
+      "id": "1c526a37-0d9d-4676-84be-ee9afc43edaa",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "bWVyKNDPgb9DiWKu",
+          "name": "Bearer Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "simple": false,
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "replaceAll",
+              "text": "[Primer tiempo1]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Primer Tiempo'][0] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "[Primer tiempo2]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Primer Tiempo'][1] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "[Segundo tiempo1]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Segundo Tiempo'][0] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "[Segundo tiempo2]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Segundo Tiempo'][1] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "=[Tercer tiempo1]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Tercer Tiempo'][0] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "[Tercer tiempo2]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Tercer Tiempo'][1] }}"
+            },
+            {
+              "action": "replaceAll",
+              "text": "[Tercer tiempo3]",
+              "replaceText": "={{ $('AI Agent').item.json.output['Tercer Tiempo'][2] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        288
+      ],
+      "id": "037a50f5-2994-48db-be15-1ae6a3b19c23",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "Zo2HGDA6ShixOkmU",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "copy",
+        "fileId": {
+          "__rl": true,
+          "value": "1APuxiYPXnpdL3hBa_FMs_MAPUwibk65nJnVCequdRQE",
+          "mode": "id"
+        },
+        "name": "=RinconDelSazonMenuDelDia3TT{{ $json.formattedDate }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1136,
+        304
+      ],
+      "id": "b770486b-9820-474f-8ff2-43a06e41ad9b",
+      "name": "Copy file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oORcR4Kj6K8nMKWz",
+          "name": "Google Drive account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.documentId }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "data",
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "application/pdf"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1520,
+        288
+      ],
+      "id": "1c347388-046b-403c-a467-e2c774a0cb48",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "oORcR4Kj6K8nMKWz",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "media",
+        "phoneNumberId": "831341313401940",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        288
+      ],
+      "id": "54d151c6-81eb-4a40-804d-431f09404706",
+      "name": "Upload media",
+      "webhookId": "a87c8b36-eb0c-4530-9093-86f50fec8c07",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "831341313401940",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "messageType": "document",
+        "mediaPath": "useMediaId",
+        "mediaId": "={{ $json.id }}",
+        "mediaFilename": "={{ $('Copy file').item.json.name }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1904,
+        288
+      ],
+      "id": "8ac3e3ca-0185-4bd2-a203-d868e8eaa5d1",
+      "name": "Send message",
+      "webhookId": "fb4f360c-9a69-4a50-b02f-55f53799a5a1",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "831341313401940",
+        "recipientPhoneNumber": "={{ $json.contacts[0].wa_id }}",
+        "textBody": "Vale, hare el menú, esto puede tardar entre 1 a 2 minutos",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        -432,
+        320
+      ],
+      "id": "5fccc0ca-2995-4c0d-a964-f4b51bd9230b",
+      "name": "Send message1",
+      "webhookId": "2fe1e032-98cc-46c1-937a-f118dad8239d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "operation": "formatDate",
+        "date": "={{ $today }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dateTime",
+      "typeVersion": 2,
+      "position": [
+        976,
+        304
+      ],
+      "id": "41f11877-ed12-445b-aed7-afd29516e5e0",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5fb01445-6b59-429c-9eeb-9328b9a31f29",
+              "leftValue": "={{ $('WhatsApp Trigger').item.json.messages[0].image }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        304
+      ],
+      "id": "e8693b19-f0d6-4b13-8c08-8b083664ecab",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "831341313401940",
+        "recipientPhoneNumber": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+        "textBody": "No se logro reconocer el menú en el mensaje. Vuelva a intentarlo.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        464
+      ],
+      "id": "fa0c0cce-86a6-4145-b675-145767141c12",
+      "name": "Send message2",
+      "webhookId": "2fe1e032-98cc-46c1-937a-f118dad8239d",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "831341313401940",
+        "recipientPhoneNumber": "Agrega un telefono",
+        "textBody": "El token de Google drive expiro, tienes que refrescarlo",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        1328,
+        464
+      ],
+      "id": "0a017dd6-f6e1-4ef7-9606-cb3fe74045e7",
+      "name": "Send message3",
+      "webhookId": "35d1d119-ea28-4032-a47a-e7d3a55b071b",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "0fLshEdgrKcf3yVc",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"Primer Tiempo\": [\"Consome\", \"Sopa\"],\n\t\"Segundo Tiempo\": [\"Arroz\", \"Ensalada\"],\n  \"Tercer Tiempo\": [\"Pollo\", \"Bistec\", \"Calabaza rellena\"]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        512
+      ],
+      "id": "284f18e9-d2f4-416a-82a0-d9922baa3c2e",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        496,
+        512
+      ],
+      "id": "7bf2faba-c652-4671-9f4e-241aaa17663f",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XJ46LCvWfQnGCzlA",
+          "name": "Google Gemini(PaLM) Api lcdtm"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "WhatsApp Trigger": [
+      {
+        "json": {
+          "messaging_product": "whatsapp",
+          "metadata": {
+            "display_phone_number": "15556474186",
+            "phone_number_id": "831341313401940"
+          },
+          "contacts": [
+            {
+              "profile": {
+                "name": "Marcos"
+              },
+              "wa_id": "5215561686190"
+            }
+          ],
+          "messages": [
+            {
+              "from": "5215561686190",
+              "id": "wamid.HBgNNTIxNTU2MTY4NjE5MBUCABIYFDNBNUEyNjg0MUY4MzI0NTNGMEREAA==",
+              "timestamp": "1765221299",
+              "text": {
+                "body": "Sopa de lentejas \nConsomé de pollo \n\nArroz\nEnsalda fresca \n\nFlautas de pollo \nBistec en salsa tatemada\nChuleta al chipotle"
+              },
+              "type": "text"
+            }
+          ],
+          "field": "messages"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download media1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copy file": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Upload media",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload media": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Copy file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Download media1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6f8a56d7-174e-4afa-8baa-fd0a7f6ad571",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "670f0bffeeb94d293ae3093e7bf493944de18d0820227ebb825d21b33307f3ff"
+  },
+  "id": "sjTHqRAQT3OXjIbD",
+  "tags": []
+}

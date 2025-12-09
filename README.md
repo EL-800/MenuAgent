@@ -1,7 +1,3 @@
-Here is the detailed **README.md** for the workflow, translated into English. It explains how the flow works, the services involved, and how to configure it based on the provided JSON file.
-
----
-
 # 🍽️ WhatsApp Menu Agent (n8n Workflow)
 
 This **n8n** workflow automates the creation and formatting of a daily restaurant menu. It allows you to receive dish details via **WhatsApp** (either by typing the text or sending a photo of a whiteboard/physical menu), processes the information using Artificial Intelligence, and returns a perfectly formatted **PDF** file based on a Google Docs template.

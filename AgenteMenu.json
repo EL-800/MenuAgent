@@ -183,7 +183,7 @@
         "operation": "copy",
         "fileId": {
           "__rl": true,
-          "value": "1APuxiYPXnpdL3hBa_FMs_MAPUwibk65nJnVCequdRQE",
+          "value": "some id",
           "mode": "id"
         },
         "name": "=RinconDelSazonMenuDelDia3TT{{ $json.formattedDate }}",
